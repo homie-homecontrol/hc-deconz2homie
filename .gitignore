@@ -1,0 +1,6 @@
+node_modules
+dist
+sessions
+example/mqtt/data/*.db
+example/mqtt/log/*.log
+devEnv.sh

@@ -1,0 +1,35 @@
+version: '3'
+services:
+    mqtt:
+        image: eclipse-mosquitto:latest
+        restart: "always"
+        deploy:
+            resources:
+                limits:
+                    memory: 125M
+        hostname: mqtt
+        ports: 
+            - "1883:1883"
+        volumes:
+            - ./mqtt/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+            - ./mqtt/data:/mosquitto/data
+            - ./mqtt/log:/mosquitto/log
+    deconz2homie:
+        image: ghcr.io/homie-homecontrol/hc-deconz2homie:latest
+        restart: "always"
+        depends_on:
+            - mqtt
+        deploy:
+            resources:
+                limits:
+                    memory: 125M
+        environment: 
+            HCDC2H_CTRL_ID: hc-deconz2homie-ctrl1
+            HCDC2H_CTRL_NAME: deCONZ to homie interface controller
+            HCDC2H_DECONZ_HOST: "<DECONZ HOST>"
+            HCDC2H_DECONZ_PORT: "<DECONZ PORT>"
+            HCDC2H_DECONZ_WS_PORT: "<DECONZ WS PORT>"
+            HCDC2H_DECONZ_API_TOKEN: "<DECONZ TOKEN>"
+            HCDC2H_DECONZ_SECURE: "false"
+            HCDC2H_MQTT_URL: "mqtt://mqtt"
+            HCDC2H_MQTT_TOPIC_ROOT: homie
