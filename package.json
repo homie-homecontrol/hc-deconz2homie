@@ -1,6 +1,6 @@
 {
   "name": "hc-deconz2homie",
-  "version": "1.0.0",
+  "version": "0.1.1",
   "description": "expose deconz zigbee devices via homie protocol convention",
   "main": "service.js",
   "scripts": {
@@ -16,7 +16,7 @@
     "cie-rgb-color-converter": "~1.0.6",
     "color-space": "~1.16.0",
     "node-homie": "~0.9.24",
-    "hc-node-homie-smarthome": "~0.4.2",
+    "hc-node-homie-smarthome": "~0.5.0",
     "rxjs": "~7.4.0",
     "winston": "~3.3.3",
     "ws": "~7.4.2"
