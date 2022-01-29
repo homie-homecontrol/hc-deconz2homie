@@ -22,6 +22,8 @@ import { GenericLightGroup } from "./GenericLightGroup";
 import { Observable } from "rxjs";
 import { DeconzMessage } from "../deconz/DeconzEvents";
 import { Group } from "./Group";
+import { H_SMARTHOME_TYPE_EXT_VIBRATION_SENSOR, VibrationSensorNode } from "./nodes/VibrationSensorNode";
+import { VibrationSensor, VIBRATION_SENSOR } from "./VibrationSensor";
 
 export declare type FactoryDeviceClass = {
     new(attrs: HomieDeviceAtrributes, mqttOptions: MQTTConnectOpts, api: DeconzAPI, events$: Observable<DeconzMessage>, sensor: Resource | Sensor | Group, deviceId?: string): FactoryDevice;
@@ -48,7 +50,8 @@ export class DeviceFactory {
         ZHAPower: H_SMARTHOME_TYPE_POWERMETER,
         ZHAOpenClose: H_SMARTHOME_TYPE_CONTACT,
         ZHASwitch: H_SMARTHOME_TYPE_EXT_GUESTURE_SENSOR,
-        ZHAThermostat: H_SMARTHOME_TYPE_THERMOSTAT
+        ZHAThermostat: H_SMARTHOME_TYPE_THERMOSTAT,
+        ZHAVibration: VIBRATION_SENSOR
     }
 
 
@@ -62,8 +65,10 @@ export class DeviceFactory {
         this.registerDeviceTypeClass(H_SMARTHOME_TYPE_MOTION_SENSOR, MotionSensor);
         this.registerDeviceTypeClass(H_SMARTHOME_TYPE_WEATHER, WeatherSensor);
         this.registerDeviceTypeClass(H_SMARTHOME_TYPE_EXT_GUESTURE_SENSOR, GestureSensor);
+        this.registerDeviceTypeClass(VIBRATION_SENSOR, VibrationSensor);
         this.registerDeviceTypeClass('lumi.sensor_cube.aqgl01', XiaomiAqaraCube);
         this.registerDeviceTypeClass('lumi.sensor_86sw2', XiaomiAqara86sw2);
+        
     }
 
     public registerDeviceTypeClass(type: string, typeClass: FactoryDeviceClass) {
@@ -121,6 +126,7 @@ export class DeviceFactory {
         for (const uniqueid in resources) {
             if (Object.prototype.hasOwnProperty.call(resources, uniqueid)) {
                 const resource = resources[uniqueid];
+                this.log.info(`Ressource [${resource.definition.type}]`);
 
                 if (resource.definition.modelid === 'lumi.sensor_cube.aqgl01') {
                     return {

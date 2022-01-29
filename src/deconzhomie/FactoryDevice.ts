@@ -62,7 +62,7 @@ export abstract class FactoryDevice<T extends Resource | Sensor | Group = Resour
     }
 
     getDateForLastUpdate(definition: SensorResource | DeconzMessage): Date {
-        if (!!definition?.state?.lastupdated || definition?.state?.lastupdated === 'none') {
+        if (!definition?.state?.lastupdated || definition?.state?.lastupdated === 'none') {
             return new Date(0);
         }
         try {
