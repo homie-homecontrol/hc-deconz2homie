@@ -21,8 +21,6 @@ export class VibrationSensor extends SensorDevice {
     public async create() {
         if (this.created) { return Promise.resolve(); }
 
-        this.log.info('Sensors: ', { sensor: this.sensor });
-
         this.vibrationResource = this.getSensorDefByType('ZHAVibration');
 
         this.maintenanceNode = this.add(new MaintenanceNode(this, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
@@ -55,7 +53,7 @@ export class VibrationSensor extends SensorDevice {
         ).subscribe({
             next: message => {
                 const state = message.state as ZHAVibrationState;
-                this.log.info('State: ', { state });
+                
                 this.vibrationNode.vibration = state.vibration;
                 this.vibrationNode.vibrationStrength = state.vibrationstrength;
 
