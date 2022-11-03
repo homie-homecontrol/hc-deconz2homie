@@ -4,7 +4,7 @@
   "description": "expose deconz zigbee devices via homie protocol convention",
   "main": "service.js",
   "scripts": {
-    "gulp": "gulp",
+    "gulp": "NODE_OPTIONS=--no-experimental-fetch gulp",
     "start": "node dist/service.js",
     "test": "node -r source-map-support/register dist/service.js",
     "debug": "node -r source-map-support/register --inspect dist/service.js"

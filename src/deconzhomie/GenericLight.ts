@@ -1,6 +1,6 @@
 import { parseRGBColor, rgbColorToString } from "node-homie/util";
 import { ColorLightNode, DimmerNode, MaintenanceNode, SwitchNode } from "hc-node-homie-smarthome";
-import { filter, switchMap, takeUntil } from "rxjs/operators";
+import { filter, switchMap, takeUntil, tap } from "rxjs/operators";
 import { adjustRGB, getRGBFromLightState, rgbToXYBri, xyBriToRgb } from "../deconz/colors.func";
 import { isLightResource, LightResource } from "../deconz/deconz.model";
 import { FactoryDevice } from "./FactoryDevice";

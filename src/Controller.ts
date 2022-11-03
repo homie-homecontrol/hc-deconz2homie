@@ -6,23 +6,28 @@ import { DeconzAPI } from "./deconz/DeconzAPI";
 import { LightResource } from "./deconz/deconz.model";
 import { DeviceFactory } from "./deconzhomie/DeviceFactory";
 
-import { takeUntil, tap } from 'rxjs/operators';
-import { Subject } from "rxjs";
+import { takeUntil, tap, retryWhen, delay, switchMap, share, filter, shareReplay } from 'rxjs/operators';
+import { Observable, Observer, Subject } from "rxjs";
 import { Sensor, SensorRessourceCollator } from "./deconzhomie/SensorRessourceCollator";
 import { OnDestroy, OnInit } from "node-homie/misc";
 import { createGroup, Group } from "./deconzhomie/Group";
 import { HomieControllerBase } from 'node-homie/controller';
 import { Globals } from "./globals";
+import { DeconzWebSocket } from "./deconz/DeconzSocket";
+import { pid } from "process";
 
 export class Controller extends HomieControllerBase {
     private stopping = false;
     private core: Core;
 
-    private events: DeconzEvents;
+    // private events: DeconzEvents;
     private api: DeconzAPI;
 
-    private _events$ = new Subject<DeconzMessage>();
-    public events$ = this._events$.asObservable();
+    // private _events$ = new Subject<DeconzMessage>();
+    private _eventsFactory$ = new Subject<Observable<DeconzMessage>>();
+    private eventsFactory$ = this._eventsFactory$.asObservable().pipe(switchMap(events => events),shareReplay(1), takeUntil(this.onDestroy$));
+    public events$: Observable<DeconzMessage>;
+
 
     protected dm: HomieDeviceManager = new HomieDeviceManager();
 
@@ -34,7 +39,7 @@ export class Controller extends HomieControllerBase {
     constructor(core: Core) {
         super(core.settings.controller_id, core.settings.controller_name, core.settings.mqttOpts);
         this.core = core;
-        this.deviceFactory = new DeviceFactory(this.core, this.events$);
+        this.deviceFactory = new DeviceFactory(this.core, this.eventsFactory$);
 
     }
 
@@ -57,7 +62,7 @@ export class Controller extends HomieControllerBase {
             this.log.warn(`New token received: [${token}]. `);
             this.log.warn(`Please set this via ${Globals.SERVICE_NAMESPACE}_DECONZ_API_TOKEN environment variable and restart`);
             throw new Error("Error requesting token. Did you click on 'Authenticate App' in the deconz web config site?");
-        }else{
+        } else {
             this.log.info('Authentication with deCONZ successful.');
         }
 
@@ -80,58 +85,122 @@ export class Controller extends HomieControllerBase {
 
 
 
-        this.events = new DeconzEvents(this.core.settings.deconz_host, this.core.settings.deconz_ws_port, this.core.settings.deconz_api_token, { autoConnect: false });
+        const openObserver: Observer<void> = {
+            next: () => {
+                this.log.info('Websocket opened: ');
+                this.api.getRessources().then(data => {
+                    Object.entries(data.lights).forEach(([id, light]) => {
+                        this.createLight(id, light).catch((err) => {
+                            this.log.error(`Cannot create light [${id}]. Reason: ${err}`, { err });
+                        })
+                    });
+                    Object.entries(data.groups).forEach(([id, group]) => {
+                        this.createLightGroup(id, createGroup(group, data.lights)).catch((err) => {
+                            this.log.error(`Cannot create group [${id}]. Reason: ${err}`, { err });
+                        })
+                    });
+                    this.sensorCollation.insertMany(data.sensors);
+
+                    // this.log.info('Groups: ', data.groups);
+
+                });
+            }, complete: () => { }, error: () => { }
+        }
 
 
-        this.events.on('event', event => {
-            if (event.e === 'changed') {
-                this._events$.next(event);
+        this.events$ = DeconzWebSocket({
+            hostname: `${this.core.settings.deconz_host}`, port: this.core.settings.deconz_ws_port, token: this.core.settings.deconz_api_token,
+            openObserver,
+            closeObserver: {
+                next: () => {
+                    this.log.info("events$ closed")
+                }, complete: () => { }, error: () => { }
             }
-        })
+        }).pipe(
+            takeUntil(this.onDestroy$),
+            retryWhen((errors: Observable<any>) => {
+                return errors.pipe(
+                    tap(err => {
+                        counter++;
+                        this.log.info(`reconnect Counter: ${counter}`);
+                        this.log.error(`events$ error occured, will try to reconnect in 5s: `, { error: err });
+                    }),
+                    delay(2000)
+                );
+            }),
+            // tap(msg=>{
+            //     console.log(msg);
+            // }),
+            filter(msg => msg.e === "changed")
+        )
 
-        this.events.on('event-added-sensors', event => {
-            this.log.info(`ADDED Sensor Event: ${event.id}`, { event });
-            this.sensorCollation.insert(event.id, event.sensor);
-        })
+        var counter = 0;
 
-        this.events.on('event-added-lights', event => {
-            this.log.info(`ADDED Lights Event: ${event.id}`, { event });
-            this.createLight(event.id, event.light).catch((err) => {
-                this.log.error(`Cannot create light [${event.id}]. Reason: ${err}`, { err });
-            })
-        })
+        // this.events$.subscribe({
+        //     next: (msg) => {
+        //         this.log.info("events$: ", { message: msg });
+        //     },
+        //     error: err => {
+        //         this.log.error(`events$ error occured: `, { error: err });
+        //     },
+        //     complete: () => {
+        //         this.log.info('events$ completed');
+        //     }
+        // })
 
-        this.events.on('event-deleted', event => {
-            this.log.info(`DELETED Event: ${event.id}`, { event });
-        })
 
-        this.events.on('open', () => {
-            this.log.info('Websocket opened: ');
-            this.api.getRessources().then(data => {
-                Object.entries(data.lights).forEach(([id, light]) => {
-                    this.createLight(id, light).catch((err) => {
-                        this.log.error(`Cannot create light [${id}]. Reason: ${err}`, { err });
-                    })
-                });
-                Object.entries(data.groups).forEach(([id, group]) => {
-                    this.createLightGroup(id, createGroup(group, data.lights)).catch((err) => {
-                        this.log.error(`Cannot create group [${id}]. Reason: ${err}`, { err });
-                    })
-                });
-                this.sensorCollation.insertMany(data.sensors);
+        // this.events = new DeconzEvents(this.core.settings.deconz_host, this.core.settings.deconz_ws_port, this.core.settings.deconz_api_token, { autoConnect: false });
 
-                // this.log.info('Groups: ', data.groups);
 
-            });
-        })
+        // this.events.on('event', event => {
+        //     if (event.e === 'changed') {
+        //         this._events$.next(event);
+        //     }
+        // })
 
-        this.events.on('close', (err) => {
-            this.log.warn('Websocket connection closed: ', { err });
-        })
+        // this.events.on('event-added-sensors', event => {
+        //     this.log.info(`ADDED Sensor Event: ${event.id}`, { event });
+        //     this.sensorCollation.insert(event.id, event.sensor);
+        // })
 
-        this.events.on('error', (err) => {
-            this.log.error('Websocket connection error: ', { err });
-        })
+        // this.events.on('event-added-lights', event => {
+        //     this.log.info(`ADDED Lights Event: ${event.id}`, { event });
+        //     this.createLight(event.id, event.light).catch((err) => {
+        //         this.log.error(`Cannot create light [${event.id}]. Reason: ${err}`, { err });
+        //     })
+        // })
+
+        // this.events.on('event-deleted', event => {
+        //     this.log.info(`DELETED Event: ${event.id}`, { event });
+        // })
+
+        // this.events.on('open', () => {
+        //     this.log.info('Websocket opened: ');
+        //     this.api.getRessources().then(data => {
+        //         Object.entries(data.lights).forEach(([id, light]) => {
+        //             this.createLight(id, light).catch((err) => {
+        //                 this.log.error(`Cannot create light [${id}]. Reason: ${err}`, { err });
+        //             })
+        //         });
+        //         Object.entries(data.groups).forEach(([id, group]) => {
+        //             this.createLightGroup(id, createGroup(group, data.lights)).catch((err) => {
+        //                 this.log.error(`Cannot create group [${id}]. Reason: ${err}`, { err });
+        //             })
+        //         });
+        //         this.sensorCollation.insertMany(data.sensors);
+
+        //         // this.log.info('Groups: ', data.groups);
+
+        //     });
+        // })
+
+        // this.events.on('close', (err) => {
+        //     this.log.warn('Websocket connection closed: ', { err });
+        // })
+
+        // this.events.on('error', (err) => {
+        //     this.log.error('Websocket connection error: ', { err });
+        // })
 
 
 
@@ -180,7 +249,9 @@ export class Controller extends HomieControllerBase {
 
     private connectEventListener() {
         if (this.stopping) { return; }
-        this.events.connect();
+        // this.events.connect();
+        this.eventsFactory$.subscribe();
+        this._eventsFactory$.next(this.events$);
 
     }
 
@@ -196,7 +267,7 @@ export class Controller extends HomieControllerBase {
             this.log.error('Error disconnecting devices');
         }
 
-        this.events.close();
+        // this.events.close();
 
     }
 
