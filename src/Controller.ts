@@ -1,20 +1,24 @@
 import { Core } from "./core/Core";
-import * as winston from "winston";
-import { DeviceDiscovery, HomieDeviceManager } from "node-homie";
-import { DeconzEvents, DeconzMessage } from "./deconz/DeconzEvents";
+import { HomieDeviceManager } from "node-homie";
 import { DeconzAPI } from "./deconz/DeconzAPI";
-import { LightResource } from "./deconz/deconz.model";
+import { DeconzMessage, LightResource, Ressources, SensorResource } from "./deconz";
 import { DeviceFactory } from "./deconzhomie/DeviceFactory";
 
-import { takeUntil, tap, retryWhen, delay, switchMap, share, filter, shareReplay } from 'rxjs/operators';
-import { Observable, Observer, Subject } from "rxjs";
-import { Sensor, SensorRessourceCollator } from "./deconzhomie/SensorRessourceCollator";
-import { OnDestroy, OnInit } from "node-homie/misc";
+import { takeUntil, tap, retryWhen, delay, switchMap, share, filter, shareReplay, groupBy, map, mergeMap, bufferTime, toArray, startWith, pairwise, pluck, scan } from 'rxjs/operators';
+import { concat, from, interval, merge, Observable, Observer, of, Subject } from "rxjs";
+import { Sensor, SensorDefinition, SensorResourceSet, SensorRessourceCollator } from "./deconzhomie/SensorRessourceCollator";
 import { createGroup, Group } from "./deconzhomie/Group";
 import { HomieControllerBase } from 'node-homie/controller';
 import { Globals } from "./globals";
 import { DeconzWebSocket } from "./deconz/DeconzSocket";
-import { pid } from "process";
+
+
+function macFromResource(resource: SensorResource) {
+    if (resource.uniqueid.includes(':') && resource.uniqueid.includes('-')) {
+        return resource.uniqueid.split('-')[0];
+    }
+}
+
 
 export class Controller extends HomieControllerBase {
     private stopping = false;
@@ -24,9 +28,9 @@ export class Controller extends HomieControllerBase {
     private api: DeconzAPI;
 
     // private _events$ = new Subject<DeconzMessage>();
-    private _eventsFactory$ = new Subject<Observable<DeconzMessage>>();
-    private eventsFactory$ = this._eventsFactory$.asObservable().pipe(switchMap(events => events),shareReplay(1), takeUntil(this.onDestroy$));
-    public events$: Observable<DeconzMessage>;
+    private _events$ = new Subject<Observable<DeconzMessage>>();
+    private events$ = this._events$.asObservable().pipe(switchMap(events => events), shareReplay(1), takeUntil(this.onDestroy$));
+    public eventsObs$: Observable<DeconzMessage>;
 
 
     protected dm: HomieDeviceManager = new HomieDeviceManager();
@@ -39,7 +43,7 @@ export class Controller extends HomieControllerBase {
     constructor(core: Core) {
         super(core.settings.controller_id, core.settings.controller_name, core.settings.mqttOpts);
         this.core = core;
-        this.deviceFactory = new DeviceFactory(this.core, this.eventsFactory$);
+        this.deviceFactory = new DeviceFactory(this.core, this.events$.pipe(filter(msg => msg.e === "changed")));
 
     }
 
@@ -75,13 +79,73 @@ export class Controller extends HomieControllerBase {
         this.sensorCollation.events$.pipe(takeUntil(this.onDestroy$)).subscribe({
             next: async event => {
                 if (event.name === 'add' || event.name === 'update') {
-                    // this.log.info(`sensor event ${event.name} - ${event.item.mac}`, {sets: event.item.sensors});
                     this.createSensor(event.item).catch((err) => {
                         this.log.error(`Cannot create sensor for [${event.item.mac}]. Reason: ${err}`, { err });
                     })
                 }
             }
         });
+
+
+
+        var counterAPI = 0;
+
+        const ressourceUpdates$ = concat(
+            // of(null),
+            from(this.api.getRessources()),
+            interval(60000).pipe(switchMap(_ => this.api.getRessources())),
+        ).pipe(
+            takeUntil(this.onDestroy$),
+            retryWhen((errors: Observable<any>) => {
+                return errors.pipe(
+                    tap(err => {
+                        counterAPI++;
+                        this.log.info(`reconnect Counter: ${counterAPI}`);
+                        this.log.error(`ressourceUpdates$ error occured, will try to reconnect in 5s: `, { error: err });
+                    }),
+                    delay(2000)
+                );
+            }),
+            tap(v => { console.log('Got ressources') }),
+            shareReplay(1)
+        );
+
+        const lights$ = ressourceUpdates$.pipe(
+            map(r => r?.lights),
+            pairwise()
+        )
+
+        const groups$ = ressourceUpdates$.pipe(
+            map(r => r?.groups),
+            pairwise()
+        )
+
+        const sensors$ = ressourceUpdates$.pipe(
+            mergeMap(r =>
+                from(Object.entries(r.sensors).map(([id, definition]) => (<SensorDefinition>{ id, definition, mac: macFromResource(definition) }))).pipe(
+                    groupBy(sensor => sensor.mac),
+                    mergeMap(sg => {
+                        return sg.pipe(
+                            scan((sensors, sensor) => {
+                                sensors[sensor.id] = sensor;
+                                return sensors;
+                            }, <SensorResourceSet>{}),
+                            map(sensors => (<Sensor>{ mac: sg.key, sensors }))
+                        );
+                    }),
+                    toArray()
+                )
+            )
+        )
+
+        sensors$.pipe(
+            startWith(null),
+            pairwise()
+        ).subscribe({
+            next: sensor => {
+                // this.log.info('Sensor: ', { sensor });
+            }
+        })
 
 
 
@@ -100,15 +164,12 @@ export class Controller extends HomieControllerBase {
                         })
                     });
                     this.sensorCollation.insertMany(data.sensors);
-
-                    // this.log.info('Groups: ', data.groups);
-
                 });
             }, complete: () => { }, error: () => { }
         }
 
 
-        this.events$ = DeconzWebSocket({
+        this.eventsObs$ = DeconzWebSocket({
             hostname: `${this.core.settings.deconz_host}`, port: this.core.settings.deconz_ws_port, token: this.core.settings.deconz_api_token,
             openObserver,
             closeObserver: {
@@ -127,14 +188,28 @@ export class Controller extends HomieControllerBase {
                     }),
                     delay(2000)
                 );
-            }),
-            // tap(msg=>{
-            //     console.log(msg);
-            // }),
-            filter(msg => msg.e === "changed")
+            })
         )
 
         var counter = 0;
+
+
+        // if (data?.e === 'changed' && data?.state){
+        //     this.emit('event-state', data);
+        //     this.emit(`event-state-${data.r}`, data);
+        // }else if (data?.e === 'changed' && data?.attr){
+        //     this.emit('event-attr', data);
+        //     this.emit(`event-attr-${data.r}`, data);
+        // }else if (data.e === 'scene-called'){
+        //     this.emit('event-scene-called', data);
+        // }else if (data.e === 'added'){
+        //     this.emit('event-added', data);
+        //     this.emit(`event-added-${data.r}`, data);
+        // }else if (data.e === 'deleted'){
+        //     this.emit('event-deleted', data);
+        //     this.emit(`event-deleted-${data.r}`, data);
+        // }
+
 
         // this.events$.subscribe({
         //     next: (msg) => {
@@ -203,6 +278,23 @@ export class Controller extends HomieControllerBase {
         // })
 
 
+        const e = this.events$.pipe(
+            // bufferTime(1500),
+            // mergeMap(events => from(events).pipe(groupBy(e => e.uniqueid, e => e.state))),
+            // mergeMap(eg => {
+            //     return eg.pipe(toArray(), map(a => ({ key: eg.key, events: a })));
+            // }),
+            takeUntil(this.onDestroy$)
+        )
+
+        e.subscribe(
+            {
+                next: data => {
+                    console.log('Data: ', data);
+                }
+            }
+        )
+
 
         this.connectEventListener();
 
@@ -250,8 +342,8 @@ export class Controller extends HomieControllerBase {
     private connectEventListener() {
         if (this.stopping) { return; }
         // this.events.connect();
-        this.eventsFactory$.subscribe();
-        this._eventsFactory$.next(this.events$);
+        this.events$.subscribe();
+        this._events$.next(this.eventsObs$);
 
     }
 

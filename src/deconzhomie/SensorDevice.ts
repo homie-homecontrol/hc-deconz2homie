@@ -4,7 +4,7 @@ import { MaintenanceNode } from "hc-node-homie-smarthome";
 import { lastValueFrom, Observable } from "rxjs";
 import { takeUntil, filter, switchMap } from "rxjs/operators";
 import { DeconzAPI } from "../deconz/DeconzAPI";
-import { DeconzMessage } from "../deconz/DeconzEvents";
+import { DeconzMessage } from "../deconz";
 import { SensorResource, SHASensorType } from "../deconz/deconz.model";
 import { FactoryDevice } from "./FactoryDevice";
 import { Sensor, SensorDefinition } from "./SensorRessourceCollator";

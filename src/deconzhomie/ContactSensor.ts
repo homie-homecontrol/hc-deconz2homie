@@ -1,7 +1,6 @@
-import { DefaultNoMotionIntervals } from "hc-node-homie-smarthome/model";
-import {  ContactNode, MaintenanceNode, MotionSensorNode } from "hc-node-homie-smarthome";
+import { ContactNode, MaintenanceNode } from "hc-node-homie-smarthome";
 import { takeUntil, filter } from "rxjs/operators";
-import { ZHALightLevel, ZHAOpenClose, ZHAPresence } from "../deconz/deconz.model";
+import { ZHAOpenClose } from "../deconz";
 import { SensorDevice } from "./SensorDevice";
 import { SensorDefinition } from "./SensorRessourceCollator";
 

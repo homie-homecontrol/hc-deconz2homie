@@ -1,6 +1,6 @@
 import { ButtonNode, MaintenanceNode, WeatherNode } from "hc-node-homie-smarthome";
 import { takeUntil, filter, tap } from "rxjs/operators";
-import { DeconzMessage } from "../deconz/DeconzEvents";
+import { DeconzMessage } from "../deconz";
 import { ZHAHumidity, ZHAPressure, ZHASwitch, ZHASwitchState, ZHATemperature } from "../deconz/deconz.model";
 import { SensorDevice } from "./SensorDevice";
 import { SensorDefinition } from "./SensorRessourceCollator";

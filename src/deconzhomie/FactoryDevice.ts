@@ -3,11 +3,9 @@ import { H_SMARTHOME_NS_V1 } from "hc-node-homie-smarthome/model";
 import { HomieDeviceAtrributes, HomieDeviceMode } from "node-homie/model";
 import { MQTTConnectOpts } from "node-homie/model";
 import { Observable } from "rxjs";
-import { DeconzAPI } from "../deconz/DeconzAPI";
-import { DeconzMessage } from "../deconz/DeconzEvents";
-import { isLightResource, Resource, SensorResource } from "../deconz/deconz.model";
 import { Group, isGroup } from "./Group";
 import { isSensor, Sensor } from "./SensorRessourceCollator";
+import { DeconzAPI, Resource, DeconzMessage, isLightResource, SensorResource } from "../deconz";
 
 
 export interface IFactoryDevice<T extends Resource | Sensor | Group = Resource | Sensor | Group> {

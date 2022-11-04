@@ -7,8 +7,7 @@ import {
 } from "hc-node-homie-smarthome/model";
 import * as winston from "winston";
 import { Core } from "../core/Core";
-import { DeconzAPI } from "../deconz/DeconzAPI";
-import { isGroupResource, isLightResource, LightResource, Resource, SHASensorType } from "../deconz/deconz.model";
+import { DeconzAPI, DeconzMessage, isGroupResource, isLightResource, LightResource, Resource, SHASensorType } from "../deconz";
 import { FactoryDevice } from "./FactoryDevice";
 import { GenericLight } from "./GenericLight";
 import { GestureSensor } from "./GestureSensor";
@@ -20,9 +19,7 @@ import { XiaomiAqaraCube } from "./XiaomiAqaraCube";
 import { Sensor, SensorResourceSet } from "./SensorRessourceCollator";
 import { GenericLightGroup } from "./GenericLightGroup";
 import { Observable } from "rxjs";
-import { DeconzMessage } from "../deconz/DeconzEvents";
 import { Group } from "./Group";
-import { H_SMARTHOME_TYPE_EXT_VIBRATION_SENSOR, VibrationSensorNode } from "./nodes/VibrationSensorNode";
 import { VibrationSensor, VIBRATION_SENSOR } from "./VibrationSensor";
 import { ContactSensor } from "./ContactSensor";
 

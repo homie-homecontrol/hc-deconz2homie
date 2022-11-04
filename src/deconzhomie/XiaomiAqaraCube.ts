@@ -3,7 +3,6 @@ import { HOMIE_TYPE_ENUM, HOMIE_TYPE_FLOAT, HOMIE_TYPE_INT } from "node-homie/mo
 import {  H_SMARTHOME_TYPE_EXTENSTION } from "hc-node-homie-smarthome/model";
 import { MaintenanceNode } from "hc-node-homie-smarthome";
 import { takeUntil, filter, tap } from "rxjs/operators";
-import { DeconzMessage } from "../deconz/DeconzEvents";
 import { ZHASwitch } from "../deconz/deconz.model";
 import { SensorDevice } from "./SensorDevice";
 import { SensorDefinition } from "./SensorRessourceCollator";
