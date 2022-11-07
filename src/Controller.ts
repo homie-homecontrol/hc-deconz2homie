@@ -11,6 +11,7 @@ import { createGroup, Group } from "./deconzhomie/Group";
 import { HomieControllerBase } from 'node-homie/controller';
 import { Globals } from "./globals";
 import { DeconzWebSocket } from "./deconz/DeconzSocket";
+import { store } from "./state";
 
 
 function macFromResource(resource: SensorResource) {
@@ -44,6 +45,17 @@ export class Controller extends HomieControllerBase {
         super(core.settings.controller_id, core.settings.controller_name, core.settings.mqttOpts);
         this.core = core;
         this.deviceFactory = new DeviceFactory(this.core, this.events$.pipe(filter(msg => msg.e === "changed")));
+
+
+
+
+        // updateState({
+        //     settings: {
+        //         controller:{
+        //             ctrlName: 'CHANGED'
+        //         }
+        //     }
+        // })
 
     }
 
@@ -121,29 +133,33 @@ export class Controller extends HomieControllerBase {
         )
 
         const sensors$ = ressourceUpdates$.pipe(
-            mergeMap(r =>
-                from(Object.entries(r.sensors).map(([id, definition]) => (<SensorDefinition>{ id, definition, mac: macFromResource(definition) }))).pipe(
-                    groupBy(sensor => sensor.mac),
-                    mergeMap(sg => {
-                        return sg.pipe(
-                            scan((sensors, sensor) => {
-                                sensors[sensor.id] = sensor;
-                                return sensors;
-                            }, <SensorResourceSet>{}),
-                            map(sensors => (<Sensor>{ mac: sg.key, sensors }))
-                        );
-                    }),
-                    toArray()
-                )
-            )
+            // tap(r => { store.updateState({ resources: { sensors: r.sensors } }) }),
+            // mergeMap(r =>
+            //     from(Object.entries(r.sensors).map(([id, definition]) => (<SensorDefinition>{ id, definition, mac: macFromResource(definition) }))).pipe(
+            //         groupBy(sensor => sensor.mac),
+            //         mergeMap(sg => {
+            //             return sg.pipe(
+            //                 scan((sensors, sensor) => {
+            //                     sensors[sensor.id] = sensor;
+            //                     return sensors;
+            //                 }, <SensorResourceSet>{}),
+            //                 map(sensors => (<Sensor>{ mac: sg.key, sensors }))
+            //             );
+            //         }),
+            //         scan((sensors, sensor) => {
+            //             return { ...sensors, [sensor.mac]: sensor }
+            //         }, <{ [mac: string]: Sensor }>{})
+            //     )
+            // )
         )
 
         sensors$.pipe(
             startWith(null),
-            pairwise()
+            // pairwise()
         ).subscribe({
             next: sensor => {
                 // this.log.info('Sensor: ', { sensor });
+
             }
         })
 
@@ -290,7 +306,7 @@ export class Controller extends HomieControllerBase {
         e.subscribe(
             {
                 next: data => {
-                    console.log('Data: ', data);
+                    // console.log('Data: ', data);
                 }
             }
         )

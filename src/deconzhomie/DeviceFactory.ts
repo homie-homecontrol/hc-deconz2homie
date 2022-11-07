@@ -6,7 +6,6 @@ import {
     H_SMARTHOME_TYPE_POWERMETER, H_SMARTHOME_TYPE_THERMOSTAT, H_SMARTHOME_TYPE_WEATHER
 } from "hc-node-homie-smarthome/model";
 import * as winston from "winston";
-import { Core } from "../core/Core";
 import { DeconzAPI, DeconzMessage, isGroupResource, isLightResource, LightResource, Resource, SHASensorType } from "../deconz";
 import { FactoryDevice } from "./FactoryDevice";
 import { GenericLight } from "./GenericLight";
@@ -22,6 +21,7 @@ import { Observable } from "rxjs";
 import { Group } from "./Group";
 import { VibrationSensor, VIBRATION_SENSOR } from "./VibrationSensor";
 import { ContactSensor } from "./ContactSensor";
+import { Core } from "../core/Core";
 
 export declare type FactoryDeviceClass = {
     new(attrs: HomieDeviceAtrributes, mqttOptions: MQTTConnectOpts, api: DeconzAPI, events$: Observable<DeconzMessage>, sensor: Resource | Sensor | Group, deviceId?: string): FactoryDevice;

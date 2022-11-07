@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
 import * as winston from "winston";
-
-
+import { Subject, takeUntil } from "rxjs";
 import { Globals } from './globals';
 import { inspect } from 'util';
 import { asyncTimeout, LogLevelName, LogLevels, SimpleLogger } from 'node-homie/misc';
+
+process.stdin.resume();
 
 const DEFAULT_LOGLEVEL = 'info'
 const ENV_DEBUG_LEVEL = `${Globals.SERVICE_NAMESPACE}_LOGLEVEL`;
@@ -18,7 +19,11 @@ const SL_LOGLEVEL = logIndex > -1 ? logIndex : LogLevels.info;
 SimpleLogger.loglevel = SL_LOGLEVEL;
 SimpleLogger.domain = Globals.LOG_DOMAIN;
 
+
+const onShutdown$ = new Subject<boolean>();
+
 import App from './App';
+
 
 const hcLogFormat = winston.format.printf((info) => {
   return `${info['timestamp']} ${info.level} [${info['service']}:${info['type']}${info['name'] ? `:${info['name']}` : ''}]: ${info.message}` + ((Object.keys(info['args']).length > 0) ? inspect(info['args'], { showHidden: false, depth: null }) : '');
@@ -63,6 +68,7 @@ const onShutdown = async (code?: number) => {
     app.onDestroy(),
     asyncTimeout(3000)
   ]);
+  onShutdown$.next(true);
   log.info('...done');
   process.exit(code);
 }
@@ -85,3 +91,7 @@ process.on('exit', async (code) => {
 });
 
 app.onInit();
+
+// setTimeout(()=> { process.kill(process.pid, 'SIGINT');}, 5000);
+
+

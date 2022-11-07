@@ -3,6 +3,10 @@
  * General Ressources
  */
 
+export interface RessourceMap<T extends Resource>{
+    [id: string]: T;
+}
+
 export interface Ressources {
     config: any;
     groups: { [id: string]: GroupResource };

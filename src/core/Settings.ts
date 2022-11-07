@@ -45,6 +45,10 @@ function numberENVVal(name: string, defval: number): number {
 }
 
 
+
+
+
+
 export class Settings {
 
     mqttOpts: MQTTConnectOpts;
@@ -54,17 +58,18 @@ export class Settings {
         public controller_id = homieIDENVVal(`CTRL_ID`, 'hc-deconz2homie-1'),
         public controller_name = stringENVVal(`CTRL_NAME`, 'deCONZ to homie interface controller'),
 
-        public deconz_secure =            boolENVVal(`DECONZ_SECURE`, false),
-        public deconz_host =              stringENVVal(`DECONZ_HOST`, 'localhost'),
-        public deconz_port =              numberENVVal(`DECONZ_PORT`, 80),
-        public deconz_ws_port =           numberENVVal(`DECONZ_WS_PORT`, 443),
-        public deconz_api_token =         stringENVVal(`DECONZ_API_TOKEN`, ''),
-        public mqtt_url =                 stringENVVal(`MQTT_URL`, ''),
-        public mqtt_user =                stringENVVal(`MQTT_USERNAME`, ''),
-        public mqtt_password =            stringENVVal(`MQTT_PASSWORD`, ''),
-        public mqtt_topic_root =          stringENVVal(`MQTT_TOPIC_ROOT`, 'homie')
+        public deconz_secure = boolENVVal(`DECONZ_SECURE`, false),
+        public deconz_host = stringENVVal(`DECONZ_HOST`, 'localhost'),
+        public deconz_port = numberENVVal(`DECONZ_PORT`, 80),
+        public deconz_ws_port = numberENVVal(`DECONZ_WS_PORT`, 443),
+        public deconz_api_token = stringENVVal(`DECONZ_API_TOKEN`, ''),
+        public mqtt_url = stringENVVal(`MQTT_URL`, ''),
+        public mqtt_user = stringENVVal(`MQTT_USERNAME`, ''),
+        public mqtt_password = stringENVVal(`MQTT_PASSWORD`, ''),
+        public mqtt_topic_root = stringENVVal(`MQTT_TOPIC_ROOT`, 'homie')
 
     ) {
+
         this.mqttOpts = {
             url: this.mqtt_url,
             username: this.mqtt_user,
