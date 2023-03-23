@@ -1,4 +1,4 @@
-import { parseRGBColor, rgbColorToString } from "node-homie/util";
+import { parseRGBColor, rgbColorToString } from "node-homie5/util";
 import { ColorLightNode, DimmerNode,  SwitchNode } from "hc-node-homie-smarthome";
 import { bufferWhen, debounceTime, filter, switchMap, take, takeUntil } from "rxjs/operators";
 import { adjustRGB, getRGBFromLightState,  rgbToXYBri, xyBriToRgb } from "../deconz/colors.func";
@@ -59,7 +59,7 @@ export class GenericLightGroup extends FactoryDevice<Group> {
             }
 
             if (!!this.resource.resource.scenes) {
-                const scenesNode = this.add(new LightSceneNode(this, undefined, { scenes: this.resource.resource.scenes.map(scene => scene.name.replace(/,/g, '_')) }));
+                const scenesNode = this.add(new LightSceneNode(this, undefined, {}, { scenes: this.resource.resource.scenes.map(scene => scene.name.replace(/,/g, '_')) }));
 
                 scenesNode.propRecall.onSetMessage$.pipe(takeUntil(this.onDestroy$)).subscribe({
                     next: async event => {
@@ -83,7 +83,7 @@ export class GenericLightGroup extends FactoryDevice<Group> {
             // if (this.resource.hascolor) {
 
             const propConfig: ColorLightNodePropertyConfig = { ctmin: 153, ctmax: 555 };
-            const colorNode = this.add(new ColorLightNode(this, {}, propConfig));
+            const colorNode = this.add(new ColorLightNode(this, undefined, {}, propConfig));
 
             colorNode.color = getRGBFromLightState(this.resource.resource.action); // ColorConverter.xyBriToRgb(this.resource.state.xy[0], this.resource.state.xy[1], Math.round((this.resource.state?.bri / 255) * 100));
             colorNode.colorTemperature = this.resource.resource.action.ct;
@@ -177,10 +177,10 @@ export class GenericLightGroup extends FactoryDevice<Group> {
             takeUntil(this.onDestroy$),
             filter(message => message.e === 'changed' && !message.state && message.r === 'groups' && message.id === this.resource.resource.id),
             filter(message => message.name && message.name !== this.attributes.name),
-            switchMap(message => this.deviceChangeTransaction(() => {
+            switchMap(message => this.deviceChangeTransaction(async () => {
                 this.log.verbose(`Updating name for ${this.pointer} - ${message.attr?.name}`);
-                this.setAttribute('name', message.attr?.name)
-                return lastValueFrom(this.publishAttribute$('name'));
+                this.attributes = {...this.attributes, name: message.attr?.name}
+                return true;
             }))
         ).subscribe();
 

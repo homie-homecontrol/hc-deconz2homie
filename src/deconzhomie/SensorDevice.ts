@@ -1,5 +1,5 @@
-import { HomieDeviceAtrributes } from "node-homie/model";
-import { MQTTConnectOpts } from "node-homie/model";
+import { DeviceAttributes, HomieID } from "node-homie5/model";
+import { MQTTConnectOpts } from "node-homie5/model";
 import { MaintenanceNode } from "hc-node-homie-smarthome";
 import { lastValueFrom, Observable } from "rxjs";
 import { takeUntil, filter, switchMap } from "rxjs/operators";
@@ -19,8 +19,8 @@ export abstract class SensorDevice<T extends Sensor = Sensor> extends FactoryDev
 
     protected maintenanceNode: MaintenanceNode;
 
-    constructor(attrs: HomieDeviceAtrributes, mqttOptions: MQTTConnectOpts, api: DeconzAPI, events$: Observable<DeconzMessage>, resource: T) {
-        super(attrs, mqttOptions, api, events$, resource);
+    constructor(id: HomieID, attrs: DeviceAttributes, mqttOptions: MQTTConnectOpts, api: DeconzAPI, events$: Observable<DeconzMessage>, resource: T) {
+        super(id, attrs, mqttOptions, api, events$, resource);
         this.sensor = resource as Sensor;
         // this.mac = mac;
 
@@ -32,9 +32,9 @@ export abstract class SensorDevice<T extends Sensor = Sensor> extends FactoryDev
         }
 
 
-        this.meta.addSubKey('hc-controller',
-            { id: 'device-mac', key: `${H_SMARTHOME_NS_V1}/device-mac`, value: this.sensor.mac }
-        )
+        // this.meta.addSubKey('hc-controller',
+        //     { id: 'device-mac', key: `${H_SMARTHOME_NS_V1}/device-mac`, value: this.sensor.mac }
+        // )
 
 
         // Update name
@@ -42,10 +42,10 @@ export abstract class SensorDevice<T extends Sensor = Sensor> extends FactoryDev
             takeUntil(this.onDestroy$),
             filter(message => message.e === 'changed' && !message.state && !message.attr && message.r === 'sensors' && this.ids.includes(message.id)),
             filter(message => message.name && message.name !== this.attributes.name),
-            switchMap(message => this.deviceChangeTransaction(() => {
+            switchMap(message => this.deviceChangeTransaction(async () => {
                 this.log.verbose(`Updating name for ${this.pointer} - ${message.attr?.name}`);
-                this.setAttribute('name', message.attr?.name)
-                return lastValueFrom(this.publishAttribute$('name'));
+                this.attributes = {...this.attributes, name: message.attr?.name}
+                return true;
             }))
         ).subscribe();
     }

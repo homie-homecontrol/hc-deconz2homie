@@ -1,6 +1,6 @@
-import { HomieDevice } from "node-homie";
-import { HomieDeviceAtrributes } from "node-homie/model";
-import { MQTTConnectOpts } from "node-homie/model";
+import { HomieDevice } from "node-homie5";
+import { DeviceAttributes, HomieID } from "node-homie5/model";
+import { MQTTConnectOpts } from "node-homie5/model";
 import {
     H_SMARTHOME_TYPE_CONTACT, H_SMARTHOME_TYPE_MOTION_SENSOR,
     H_SMARTHOME_TYPE_POWERMETER, H_SMARTHOME_TYPE_THERMOSTAT, H_SMARTHOME_TYPE_WEATHER
@@ -27,7 +27,7 @@ import { VibrationSensor, VIBRATION_SENSOR } from "./VibrationSensor";
 import { ContactSensor } from "./ContactSensor";
 
 export declare type FactoryDeviceClass = {
-    new(attrs: HomieDeviceAtrributes, mqttOptions: MQTTConnectOpts, api: DeconzAPI, events$: Observable<DeconzMessage>, sensor: Resource | Sensor | Group, deviceId?: string): FactoryDevice;
+    new(id: HomieID, attrs: DeviceAttributes, mqttOptions: MQTTConnectOpts, api: DeconzAPI, events$: Observable<DeconzMessage>, sensor: Resource | Sensor | Group, deviceId?: string): FactoryDevice;
 };
 
 export interface DeviceTypeClasses {
@@ -56,7 +56,7 @@ export class DeviceFactory {
     }
 
 
-    constructor(private core: Core, private events$: Observable<DeconzMessage> ) {
+    constructor(private core: Core, private events$: Observable<DeconzMessage>, protected parentId?: string) {
         this.log = winston.child({
             type: this.constructor.name
         });
@@ -70,7 +70,7 @@ export class DeviceFactory {
         this.registerDeviceTypeClass(VIBRATION_SENSOR, VibrationSensor);
         this.registerDeviceTypeClass('lumi.sensor_cube.aqgl01', XiaomiAqaraCube);
         this.registerDeviceTypeClass('lumi.sensor_86sw2', XiaomiAqara86sw2);
-        
+
     }
 
     public registerDeviceTypeClass(type: string, typeClass: FactoryDeviceClass) {
@@ -82,12 +82,11 @@ export class DeviceFactory {
         this.log.info(`Create light device: ${ressource.name} `);
         const typeClass = this.deviceTypes['light'];
         // ressource.uniqueid
-        const dev = new typeClass(
+        const dev = new typeClass(`light-${deviceId}`,
             {
-                // id: this.getIDFromUniqueId(ressource.uniqueid),
-                id: `light-${deviceId}`,
-                // id: ressource.name,
-                name: ressource.name
+                name: ressource.name,
+                parent: this.parentId,
+                root: this.parentId
             },
             {
                 url: this.core.settings.mqtt_url,
@@ -105,12 +104,11 @@ export class DeviceFactory {
         this.log.info(`Create group device: ${ressource.resource.name} `);
         const typeClass = this.deviceTypes['group'];
         // ressource.uniqueid
-        const dev = new typeClass(
+        const dev = new typeClass(`group-${deviceId}`,
             {
-                // id: this.getIDFromUniqueId(ressource.uniqueid),
-                id: `group-${deviceId}`,
-                // id: ressource.name,
-                name: ressource.resource.name
+                name: ressource.resource.name,
+                parent: this.parentId,
+                root: this.parentId
             },
             {
                 url: this.core.settings.mqtt_url,
@@ -173,12 +171,11 @@ export class DeviceFactory {
         if (!deviceInfo) { return undefined; }
         this.log.info(`Create sensor device for ${sensor.mac} - ${deviceInfo.name}`);
 
-        const dev = new deviceInfo.typeClass(
+        const dev = new deviceInfo.typeClass(deviceInfo.id,
             {
-                // id: `${prefix}-${deviceId}`,
-                id: deviceInfo.id,
-                // id: this.getIDFromUniqueId(deviceInfo.uniqueid),
-                name: deviceInfo.name
+                name: deviceInfo.name,
+                parent: this.parentId,
+                root: this.parentId
             },
             {
                 url: this.core.settings.mqtt_url,

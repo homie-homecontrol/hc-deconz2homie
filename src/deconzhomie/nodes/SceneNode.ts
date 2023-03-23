@@ -1,5 +1,5 @@
-import { HomieNode, HomieProperty, HomieDevice } from "node-homie";
-import { HomieNodeAtrributes, HOMIE_TYPE_ENUM} from "node-homie/model";
+import { HomieNode, HomieProperty, HomieDevice } from "node-homie5";
+import { NodeAttributes, HOMIE_TYPE_ENUM, HomieID } from "node-homie5/model";
 import { BaseNodePropertyConfig, H_SMARTHOME_TYPE_EXTENSTION } from "hc-node-homie-smarthome/model";
 import { BaseSmarthomeNode } from "hc-node-homie-smarthome";
 
@@ -12,7 +12,7 @@ export interface LightSceneNodePropertyConfig extends BaseNodePropertyConfig<Sma
     scenes: string[];
 }
 
- export class LightSceneNode extends BaseSmarthomeNode<LightSceneNodePropertyConfig> {
+export class LightSceneNode extends BaseSmarthomeNode<LightSceneNodePropertyConfig> {
     public readonly propConfig: LightSceneNodePropertyConfig;
 
     public readonly propRecall: HomieProperty;
@@ -23,18 +23,16 @@ export interface LightSceneNodePropertyConfig extends BaseNodePropertyConfig<Sma
         }
     }
 
-    constructor(device: HomieDevice, attrs: Partial<HomieNodeAtrributes> = {}, propConfig: LightSceneNodePropertyConfig = { scenes: [] }) {
-        super(device, {
+    constructor(device: HomieDevice, id: HomieID = 'scenes', attrs: Partial<NodeAttributes> = {}, propConfig: LightSceneNodePropertyConfig = { scenes: [] }) {
+        super(device, id, {
             ...{
-                id: 'scenes',
                 name: 'Scenes',
                 type: H_SMARTHOME_TYPE_EXT_LIGHTSCENE
             },
             ...attrs
         }, propConfig);
 
-        this.propRecall = this.makeProperty({
-            id: 'recall',
+        this.propRecall = this.makeProperty('recall', {
             name: 'Recall a scene',
             datatype: HOMIE_TYPE_ENUM,
             retained: false,

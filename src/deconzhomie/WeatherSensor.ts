@@ -23,12 +23,12 @@ export class WeatherSensor extends SensorDevice {
 
         const maintenanceResource = this.temp ? this.temp : this.hum ? this.hum : this.pres ? this.pres : null;
 
-        this.maintenanceNode = this.add(new MaintenanceNode(this, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
+        this.maintenanceNode = this.add(new MaintenanceNode(this, undefined, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
         this.maintenanceNode.lastUpdate = this.getDateForLastUpdate(maintenanceResource?.definition);
         this.maintenanceNode.reachable = maintenanceResource?.definition.config.reachable;
         this.maintenanceNode.batteryLevel = maintenanceResource?.definition.config.battery;
 
-        this.weatherNode = this.add(new WeatherNode(this, {}, { temperature: !!this.temp, humidity: !!this.hum, pressure: !!this.pres, tempUnit: 'C' }));
+        this.weatherNode = this.add(new WeatherNode(this, undefined, {}, { temperature: !!this.temp, humidity: !!this.hum, pressure: !!this.pres, tempUnit: 'C' }));
 
         this.updateTemperature();
         this.updateHumidity();

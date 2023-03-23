@@ -1,4 +1,4 @@
-import { HomieID, isHomieID, MQTTConnectOpts } from 'node-homie/model';
+import { HomieID, isHomieID, MQTTConnectOpts } from 'node-homie5/model';
 import { Globals } from '../globals';
 
 function getEnvVar(name: string): string | undefined {

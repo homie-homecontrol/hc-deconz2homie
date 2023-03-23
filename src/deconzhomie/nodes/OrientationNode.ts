@@ -1,11 +1,11 @@
-import { HomieNode, HomieProperty, HomieDevice } from "node-homie";
-import { HomieNodeAtrributes, HOMIE_TYPE_BOOL, HOMIE_TYPE_FLOAT, HOMIE_TYPE_INT, HOMIE_TYPE_STRING } from "node-homie/model";
+import { HomieProperty, HomieDevice } from "node-homie5";
+import { NodeAttributes, HOMIE_TYPE_INT, HomieID } from "node-homie5/model";
 import { BaseNodePropertyConfig, H_SMARTHOME_TYPE_EXTENSTION } from "hc-node-homie-smarthome/model";
 import { BaseSmarthomeNode } from "hc-node-homie-smarthome";
 
 export const H_SMARTHOME_TYPE_EXT_ORIENTATION_SENSOR = `${H_SMARTHOME_TYPE_EXTENSTION}=orientation`;
 
-export const H_SMARTHOME_TYPE_EXT_ORIENTATION_SENSOR_PROPS = ['orientation-x','orientation-y','orientation-z', 'tilt-angle'] as const;
+export const H_SMARTHOME_TYPE_EXT_ORIENTATION_SENSOR_PROPS = ['orientation-x', 'orientation-y', 'orientation-z', 'tilt-angle'] as const;
 export type SmarthomeTypeOrientationSensorProps = typeof H_SMARTHOME_TYPE_EXT_ORIENTATION_SENSOR_PROPS[number];
 
 export interface OrientationSensorPropertyConfig extends BaseNodePropertyConfig<SmarthomeTypeOrientationSensorProps> {
@@ -54,10 +54,9 @@ export class OrientationNode extends BaseSmarthomeNode<OrientationSensorProperty
         return parseInt(this.propTiltAngle.value);
     }
 
-    constructor(device: HomieDevice, attrs: Partial<HomieNodeAtrributes> = {}, propConfig: OrientationSensorPropertyConfig = {  }) {
-        super(device, {
+    constructor(device: HomieDevice, id: HomieID = 'orientation', attrs: Partial<NodeAttributes> = {}, propConfig: OrientationSensorPropertyConfig = {}) {
+        super(device, id, {
             ...{
-                id: 'orientation',
                 name: 'Orientation information',
                 type: H_SMARTHOME_TYPE_EXT_ORIENTATION_SENSOR
             },
@@ -65,32 +64,29 @@ export class OrientationNode extends BaseSmarthomeNode<OrientationSensorProperty
         }, propConfig);
 
 
-        this.propOrientationX = this.makeProperty({
-            id: 'orientation-x',
+        this.propOrientationX = this.makeProperty('orientation-x', {
             name: 'Orientation angle x axis',
             datatype: HOMIE_TYPE_INT,
             retained: true,
             settable: false,
         });
 
-        this.propOrientationY = this.makeProperty({
-            id: 'orientation-y',
+        this.propOrientationY = this.makeProperty('orientation-y', {
+
             name: 'Orientation angle y axis',
             datatype: HOMIE_TYPE_INT,
             retained: true,
             settable: false,
         });
 
-        this.propOrientationZ = this.makeProperty({
-            id: 'orientation-z',
+        this.propOrientationZ = this.makeProperty('orientation-z', {
             name: 'Orientation angle z axis',
             datatype: HOMIE_TYPE_INT,
             retained: true,
             settable: false,
         });
 
-        this.propTiltAngle = this.makeProperty({
-            id: 'tilt-angle',
+        this.propTiltAngle = this.makeProperty('tilt-angle', {
             name: 'Tilt angle',
             datatype: HOMIE_TYPE_INT,
             retained: true,

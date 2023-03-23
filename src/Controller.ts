@@ -1,6 +1,6 @@
 import { Core } from "./core/Core";
 import * as winston from "winston";
-import { DeviceDiscovery, HomieDeviceManager } from "node-homie";
+import { DeviceDiscovery, HomieDeviceManager } from "node-homie5";
 import { DeconzEvents, DeconzMessage } from "./deconz/DeconzEvents";
 import { DeconzAPI } from "./deconz/DeconzAPI";
 import { LightResource } from "./deconz/deconz.model";
@@ -9,9 +9,9 @@ import { DeviceFactory } from "./deconzhomie/DeviceFactory";
 import { takeUntil, tap } from 'rxjs/operators';
 import { Subject } from "rxjs";
 import { Sensor, SensorRessourceCollator } from "./deconzhomie/SensorRessourceCollator";
-import { OnDestroy, OnInit } from "node-homie/misc";
+import { OnDestroy, OnInit } from "node-homie5/misc";
 import { createGroup, Group } from "./deconzhomie/Group";
-import { HomieControllerBase } from 'node-homie/controller';
+import { HomieControllerBase } from 'node-homie5/controller';
 import { Globals } from "./globals";
 
 export class Controller extends HomieControllerBase {
@@ -34,7 +34,7 @@ export class Controller extends HomieControllerBase {
     constructor(core: Core) {
         super(core.settings.controller_id, core.settings.controller_name, core.settings.mqttOpts);
         this.core = core;
-        this.deviceFactory = new DeviceFactory(this.core, this.events$);
+        this.deviceFactory = new DeviceFactory(this.core, this.events$,core.settings.controller_id);
 
     }
 

@@ -1,7 +1,6 @@
-import { DefaultNoMotionIntervals } from "hc-node-homie-smarthome/model";
-import {  ContactNode, MaintenanceNode, MotionSensorNode } from "hc-node-homie-smarthome";
+import {  ContactNode, MaintenanceNode } from "hc-node-homie-smarthome";
 import { takeUntil, filter } from "rxjs/operators";
-import { ZHALightLevel, ZHAOpenClose, ZHAPresence } from "../deconz/deconz.model";
+import { ZHAOpenClose } from "../deconz/deconz.model";
 import { SensorDevice } from "./SensorDevice";
 import { SensorDefinition } from "./SensorRessourceCollator";
 
@@ -18,12 +17,12 @@ export class ContactSensor extends SensorDevice {
 
         this.openCloseResource = this.getSensorDefByType('ZHAOpenClose');
 
-        this.maintenanceNode =  this.add(new MaintenanceNode(this, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
+        this.maintenanceNode =  this.add(new MaintenanceNode(this, undefined, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
         this.maintenanceNode.lastUpdate =this.getDateForLastUpdate(this.openCloseResource.definition);
         this.maintenanceNode.reachable = this.openCloseResource.definition.config.reachable;
         this.maintenanceNode.batteryLevel = this.openCloseResource.definition.config.battery;
 
-        this.contactNode =  this.add(new ContactNode(this, {}, { }));
+        this.contactNode =  this.add(new ContactNode(this, undefined, {}, { }));
 
         this.contactNode.state = this.openCloseResource.definition.state.open;
 

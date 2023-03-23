@@ -5,7 +5,7 @@ import * as winston from "winston";
 
 import { Globals } from './globals';
 import { inspect } from 'util';
-import { asyncTimeout, LogLevelName, LogLevels, SimpleLogger } from 'node-homie/misc';
+import { asyncTimeout, LogLevelName, LogLevels, SimpleLogger } from 'node-homie5/misc';
 
 const DEFAULT_LOGLEVEL = 'info'
 const ENV_DEBUG_LEVEL = `${Globals.SERVICE_NAMESPACE}_LOGLEVEL`;

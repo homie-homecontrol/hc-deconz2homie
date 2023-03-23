@@ -1,13 +1,12 @@
-import { HomieDevice } from "node-homie";
-import { H_SMARTHOME_NS_V1 } from "hc-node-homie-smarthome/model";
-import { HomieDeviceAtrributes, HomieDeviceMode } from "node-homie/model";
-import { MQTTConnectOpts } from "node-homie/model";
+import { HomieDevice } from "node-homie5";
+import { DeviceAttributes, HomieDeviceMode, HomieID } from "node-homie5/model";
+import { MQTTConnectOpts } from "node-homie5/model";
 import { Observable } from "rxjs";
 import { DeconzAPI } from "../deconz/DeconzAPI";
 import { DeconzMessage } from "../deconz/DeconzEvents";
-import { isLightResource, Resource, SensorResource } from "../deconz/deconz.model";
-import { Group, isGroup } from "./Group";
-import { isSensor, Sensor } from "./SensorRessourceCollator";
+import { Resource, SensorResource } from "../deconz/deconz.model";
+import { Group } from "./Group";
+import { Sensor } from "./SensorRessourceCollator";
 
 
 export interface IFactoryDevice<T extends Resource | Sensor | Group = Resource | Sensor | Group> {
@@ -26,38 +25,38 @@ export abstract class FactoryDevice<T extends Resource | Sensor | Group = Resour
     readonly api: DeconzAPI;
     readonly events$: Observable<DeconzMessage>;
 
-    constructor(attrs: HomieDeviceAtrributes, mqttOptions: MQTTConnectOpts, api: DeconzAPI, events$: Observable<DeconzMessage>, resource: T, deviceId?: string) {
-        super(attrs, mqttOptions, HomieDeviceMode.Device);
+    constructor(id: HomieID, attrs: DeviceAttributes, mqttOptions: MQTTConnectOpts, api: DeconzAPI, events$: Observable<DeconzMessage>, resource: T, deviceId?: string) {
+        super(id, attrs, mqttOptions, HomieDeviceMode.Device);
         this.api = api;
         this.events$ = events$;
         this.resource = resource;
         this.deviceId = deviceId;
 
-        if (isLightResource(this.resource)) {
+        // if (isLightResource(this.resource)) {
 
-            const controllerMeta = this.meta.add({
-                id: 'hc-controller', key: `${H_SMARTHOME_NS_V1}/controller`, value: 'hm2deconz', subkeys: [
-                    { id: 'device-type', key: `${H_SMARTHOME_NS_V1}/device-type`, value: this.resource.type },
-                    { id: 'device-fw', key: `${H_SMARTHOME_NS_V1}/device-fw`, value: this.resource.swversion },
-                    { id: 'manufacturer', key: `${H_SMARTHOME_NS_V1}/manufacturer`, value: this.resource.manufacturername },
-                    { id: 'model-id', key: `${H_SMARTHOME_NS_V1}/model-id`, value: this.resource.modelid }
-                ]
-            })
-        } else if (isGroup(this.resource)) {
+        //     const controllerMeta = this.meta.add({
+        //         id: 'hc-controller', key: `${H_SMARTHOME_NS_V1}/controller`, value: 'hm2deconz', subkeys: [
+        //             { id: 'device-type', key: `${H_SMARTHOME_NS_V1}/device-type`, value: this.resource.type },
+        //             { id: 'device-fw', key: `${H_SMARTHOME_NS_V1}/device-fw`, value: this.resource.swversion },
+        //             { id: 'manufacturer', key: `${H_SMARTHOME_NS_V1}/manufacturer`, value: this.resource.manufacturername },
+        //             { id: 'model-id', key: `${H_SMARTHOME_NS_V1}/model-id`, value: this.resource.modelid }
+        //         ]
+        //     })
+        // } else if (isGroup(this.resource)) {
 
-        } else if (isSensor(this.resource)) {
-            const resourceSet = this.resource.sensors
-            const firstResource = resourceSet[Object.keys(resourceSet)[0]].definition;
-            if (!!firstResource) {
-                const controllerMeta = this.meta.add({
-                    id: 'hc-controller', key: `${H_SMARTHOME_NS_V1}/controller`, value: 'hm2deconz', subkeys: [
-                        { id: 'device-fw', key: `${H_SMARTHOME_NS_V1}/device-type`, value: firstResource.swversion },
-                        { id: 'manufacturer', key: `${H_SMARTHOME_NS_V1}/manufacturer`, value: firstResource.manufacturername },
-                        { id: 'model-id', key: `${H_SMARTHOME_NS_V1}/model-id`, value: firstResource.modelid }
-                    ]
-                })
-            }
-        }
+        // } else if (isSensor(this.resource)) {
+        //     const resourceSet = this.resource.sensors
+        //     const firstResource = resourceSet[Object.keys(resourceSet)[0]].definition;
+        //     if (!!firstResource) {
+        //         const controllerMeta = this.meta.add({
+        //             id: 'hc-controller', key: `${H_SMARTHOME_NS_V1}/controller`, value: 'hm2deconz', subkeys: [
+        //                 { id: 'device-fw', key: `${H_SMARTHOME_NS_V1}/device-type`, value: firstResource.swversion },
+        //                 { id: 'manufacturer', key: `${H_SMARTHOME_NS_V1}/manufacturer`, value: firstResource.manufacturername },
+        //                 { id: 'model-id', key: `${H_SMARTHOME_NS_V1}/model-id`, value: firstResource.modelid }
+        //             ]
+        //         })
+        //     }
+        // }
 
     }
 
