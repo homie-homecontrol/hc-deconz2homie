@@ -1,5 +1,5 @@
-import { HomieNode, HomieProperty, HomieDevice } from "node-homie5";
-import { NodeAttributes, HOMIE_TYPE_BOOL, HOMIE_TYPE_INT, HomieID } from "node-homie5/model";
+import { HomieNode, HomieProperty, HomieDevice } from "node-homie";
+import { NodeAttributes, HOMIE_TYPE_BOOL, HOMIE_TYPE_INT, HomieID } from "node-homie/model";
 import { BaseNodePropertyConfig, H_SMARTHOME_TYPE_EXTENSTION } from "hc-node-homie-smarthome/model";
 import { BaseSmarthomeNode } from "hc-node-homie-smarthome";
 
@@ -35,9 +35,10 @@ export class VibrationSensorNode extends BaseSmarthomeNode<VibrationSensorProper
         return parseInt(this.propVibrationStrength.value);
     }
 
-    constructor(device: HomieDevice, id: HomieID = 'vibration', attrs: Partial<NodeAttributes> = {}, propConfig: VibrationSensorPropertyConfig = {}) {
-        super(device, id, {
+    constructor(device: HomieDevice,  attrs: Partial<NodeAttributes> = {}, propConfig: VibrationSensorPropertyConfig = {}) {
+        super(device, {
             ...{
+                id: 'vibration',
                 name: 'Vibration sensor',
                 type: H_SMARTHOME_TYPE_EXT_VIBRATION_SENSOR
             },
@@ -45,14 +46,16 @@ export class VibrationSensorNode extends BaseSmarthomeNode<VibrationSensorProper
         }, propConfig);
 
 
-        this.propVibration = this.makeProperty( 'vibration',{
+        this.propVibration = this.makeProperty( {
+            id: 'vibration',
             name: 'Vibration detected',
             datatype: HOMIE_TYPE_BOOL,
             retained: true,
             settable: false,
         });
 
-        this.propVibrationStrength = this.makeProperty('vibration-strength',{
+        this.propVibrationStrength = this.makeProperty({
+            id: 'vibration-strength',
             name: 'Vibration strength',
             datatype: HOMIE_TYPE_INT,
             retained: true,

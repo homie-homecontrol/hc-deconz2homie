@@ -23,7 +23,7 @@ export class VibrationSensor extends SensorDevice {
 
         this.vibrationResource = this.getSensorDefByType('ZHAVibration');
 
-        this.maintenanceNode = this.add(new MaintenanceNode(this, undefined, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
+        this.maintenanceNode = this.add(new MaintenanceNode(this, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
         this.maintenanceNode.lastUpdate = this.getDateForLastUpdate(this.vibrationResource.definition);
         this.maintenanceNode.reachable = this.vibrationResource.definition.config.reachable;
         this.maintenanceNode.batteryLevel = this.vibrationResource.definition.config.battery;

@@ -1,7 +1,6 @@
-import { ButtonNode, MaintenanceNode, WeatherNode } from "hc-node-homie-smarthome";
-import { takeUntil, filter, tap } from "rxjs/operators";
-import { DeconzMessage } from "../deconz/DeconzEvents";
-import { ZHAHumidity, ZHAPressure, ZHASwitch, ZHASwitchState, ZHATemperature } from "../deconz/deconz.model";
+import { ButtonNode, MaintenanceNode } from "hc-node-homie-smarthome";
+import { takeUntil, filter } from "rxjs/operators";
+import { ZHASwitch } from "../deconz/deconz.model";
 import { SensorDevice } from "./SensorDevice";
 import { SensorDefinition } from "./SensorRessourceCollator";
 
@@ -20,14 +19,14 @@ export class XiaomiAqara86sw2 extends SensorDevice {
         this.switch = this.getSensorDefByType('ZHASwitch');
 
 
-        this.maintenanceNode = this.add(new MaintenanceNode(this, undefined, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
+        this.maintenanceNode = this.add(new MaintenanceNode(this, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
         this.maintenanceNode.lastUpdate = this.getDateForLastUpdate(this.switch.definition);
         this.maintenanceNode.reachable = this.switch.definition.config.reachable;
         this.maintenanceNode.batteryLevel = this.switch.definition.config.battery;
 
-        this.button1 = this.add(new ButtonNode(this, 'button-1', { name: 'Left button' }, { buttonStates: ['press'], settable: false }));
-        this.button2 = this.add(new ButtonNode(this, 'button-2', { name: 'Right button' }, { buttonStates: ['press'], settable: false }));
-        this.button3 = this.add(new ButtonNode(this, 'button-3', { name: 'Both buttons' }, { buttonStates: ['press'], settable: false }));
+        this.button1 = this.add(new ButtonNode(this,  {id: 'button-1', name: 'Left button' }, { buttonStates: ['press'], settable: false }));
+        this.button2 = this.add(new ButtonNode(this,  {id: 'button-2', name: 'Right button' }, { buttonStates: ['press'], settable: false }));
+        this.button3 = this.add(new ButtonNode(this,  {id: 'button-3', name: 'Both buttons' }, { buttonStates: ['press'], settable: false }));
 
         this.subscribeEvents();
 

@@ -1,12 +1,13 @@
-import { HomieDevice } from "node-homie5";
-import { DeviceAttributes, HomieDeviceMode, HomieID } from "node-homie5/model";
-import { MQTTConnectOpts } from "node-homie5/model";
+import { HomieDevice } from "node-homie";
+import { DeviceAttributes, HomieDeviceMode, HomieID } from "node-homie/model";
+import { MQTTConnectOpts } from "node-homie/model";
 import { Observable } from "rxjs";
 import { DeconzAPI } from "../deconz/DeconzAPI";
 import { DeconzMessage } from "../deconz/DeconzEvents";
 import { Resource, SensorResource } from "../deconz/deconz.model";
 import { Group } from "./Group";
 import { Sensor } from "./SensorRessourceCollator";
+import { RxMqtt } from "node-homie/mqtt";
 
 
 export interface IFactoryDevice<T extends Resource | Sensor | Group = Resource | Sensor | Group> {
@@ -25,8 +26,8 @@ export abstract class FactoryDevice<T extends Resource | Sensor | Group = Resour
     readonly api: DeconzAPI;
     readonly events$: Observable<DeconzMessage>;
 
-    constructor(id: HomieID, attrs: DeviceAttributes, mqttOptions: MQTTConnectOpts, api: DeconzAPI, events$: Observable<DeconzMessage>, resource: T, deviceId?: string) {
-        super(id, attrs, mqttOptions, HomieDeviceMode.Device);
+    constructor(attrs: DeviceAttributes, mqttOptions: RxMqtt, api: DeconzAPI, events$: Observable<DeconzMessage>, resource: T, deviceId?: string) {
+        super(attrs, mqttOptions, HomieDeviceMode.Device);
         this.api = api;
         this.events$ = events$;
         this.resource = resource;

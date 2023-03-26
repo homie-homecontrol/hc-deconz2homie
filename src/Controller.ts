@@ -1,18 +1,18 @@
 import { Core } from "./core/Core";
 import * as winston from "winston";
-import { DeviceDiscovery, HomieDeviceManager } from "node-homie5";
+import { DeviceDiscovery, HomieDeviceManager } from "node-homie";
 import { DeconzEvents, DeconzMessage } from "./deconz/DeconzEvents";
 import { DeconzAPI } from "./deconz/DeconzAPI";
 import { LightResource } from "./deconz/deconz.model";
 import { DeviceFactory } from "./deconzhomie/DeviceFactory";
 
-import { takeUntil, tap } from 'rxjs/operators';
-import { Subject } from "rxjs";
+import { take, takeUntil, tap } from 'rxjs/operators';
+import { firstValueFrom, lastValueFrom, Subject } from "rxjs";
 import { Sensor, SensorRessourceCollator } from "./deconzhomie/SensorRessourceCollator";
-import { OnDestroy, OnInit } from "node-homie5/misc";
 import { createGroup, Group } from "./deconzhomie/Group";
-import { HomieControllerBase } from 'node-homie5/controller';
+import { HomieControllerBase } from 'node-homie/controller';
 import { Globals } from "./globals";
+import { RxMqtt } from "node-homie/mqtt";
 
 export class Controller extends HomieControllerBase {
     private stopping = false;
@@ -29,18 +29,43 @@ export class Controller extends HomieControllerBase {
     protected deviceFactory: DeviceFactory;
 
 
+    protected readonly sharedMqtt: RxMqtt;
+
     private sensorCollation = new SensorRessourceCollator();
+
+    private connected$ = new Subject<boolean>();
 
     constructor(core: Core) {
         super(core.settings.controller_id, core.settings.controller_name, core.settings.mqttOpts);
         this.core = core;
-        this.deviceFactory = new DeviceFactory(this.core, this.events$,core.settings.controller_id);
+        this.sharedMqtt=new RxMqtt(this.mqttOpts);
+        this.deviceFactory = new DeviceFactory(this.core, this.events$, this.sharedMqtt, core.settings.controller_id);
+
+
+        this.sharedMqtt.onConnect$.pipe(takeUntil(this.connected$)).subscribe({
+            next:()=>{
+                this.log.info('Mqtt CONNECTED')
+                this.connected$.next(true);
+                this.log.info('connected sent')
+                // this.connected$.complete();
+            }
+        })
+        
+
+
 
     }
 
     public async onInit() {
-
+        this.log.info('Controller onInit')
         await super.onInit();
+        this.sharedMqtt.onInit();
+        this.connected$.subscribe({
+            next: v=> {this.log.info(`subsribe connected: ${v}  -- ${this.sharedMqtt.connectionInfo.connected}`);}
+        })
+        await firstValueFrom(this.connected$.pipe(tap(v=> {this.log.info(`connected: ${v}`)})));
+        this.log.info('Continue init after connected')
+
         this.api = new DeconzAPI(this.core.settings.deconz_host, this.core.settings.deconz_port, this.core.settings.deconz_api_token, this.core.settings.deconz_secure);
 
         const valid = await this.api.checkAPIToken();
@@ -57,7 +82,7 @@ export class Controller extends HomieControllerBase {
             this.log.warn(`New token received: [${token}]. `);
             this.log.warn(`Please set this via ${Globals.SERVICE_NAMESPACE}_DECONZ_API_TOKEN environment variable and restart`);
             throw new Error("Error requesting token. Did you click on 'Authenticate App' in the deconz web config site?");
-        }else{
+        } else {
             this.log.info('Authentication with deCONZ successful.');
         }
 
@@ -150,6 +175,13 @@ export class Controller extends HomieControllerBase {
             const oldDevice = this.dm.removeDevice(device.id);
             await oldDevice.onDestroy();
         }
+        await this.controllerDevice.deviceChangeTransactionAsync(async ()=>{
+            if (!this.controllerDevice.attributes.children?.includes(device.id)) {
+                this.controllerDevice.updateAttributes({ ...this.controllerDevice.attributes, children: [...(this.controllerDevice.attributes.children?this.controllerDevice.attributes.children: []), device.id] })
+            }
+            return true;
+        })
+
         this.dm.add(device);
         return device.onInit();
     }
@@ -161,6 +193,12 @@ export class Controller extends HomieControllerBase {
             const oldDevice = this.dm.removeDevice(device.id);
             await oldDevice.onDestroy();
         }
+        await this.controllerDevice.deviceChangeTransactionAsync(async ()=>{
+            if (!this.controllerDevice.attributes.children?.includes(device.id)) {
+                this.controllerDevice.updateAttributes({ ...this.controllerDevice.attributes, children: [...(this.controllerDevice.attributes.children?this.controllerDevice.attributes.children: []), device.id] })
+            }
+            return true;
+        })
         this.dm.add(device);
         return device.onInit();
     }
@@ -172,6 +210,12 @@ export class Controller extends HomieControllerBase {
             const oldDevice = this.dm.removeDevice(device.id);
             await oldDevice.onDestroy();
         }
+        await this.controllerDevice.deviceChangeTransactionAsync(async ()=>{
+            if (!this.controllerDevice.attributes.children?.includes(device.id)) {
+                this.controllerDevice.updateAttributes({ ...this.controllerDevice.attributes, children: [...(this.controllerDevice.attributes.children?this.controllerDevice.attributes.children: []), device.id] })
+            }
+            return true;
+        })
         this.dm.add(device);
         return device.onInit();
     }

@@ -1,6 +1,6 @@
-import { HomieDevice } from "node-homie5";
-import { DeviceAttributes, HomieID } from "node-homie5/model";
-import { MQTTConnectOpts } from "node-homie5/model";
+import { HomieDevice } from "node-homie";
+import { DeviceAttributes, HomieID, IDAttributeImpl } from "node-homie/model";
+import { MQTTConnectOpts } from "node-homie/model";
 import {
     H_SMARTHOME_TYPE_CONTACT, H_SMARTHOME_TYPE_MOTION_SENSOR,
     H_SMARTHOME_TYPE_POWERMETER, H_SMARTHOME_TYPE_THERMOSTAT, H_SMARTHOME_TYPE_WEATHER
@@ -22,12 +22,12 @@ import { GenericLightGroup } from "./GenericLightGroup";
 import { Observable } from "rxjs";
 import { DeconzMessage } from "../deconz/DeconzEvents";
 import { Group } from "./Group";
-import { H_SMARTHOME_TYPE_EXT_VIBRATION_SENSOR, VibrationSensorNode } from "./nodes/VibrationSensorNode";
 import { VibrationSensor, VIBRATION_SENSOR } from "./VibrationSensor";
 import { ContactSensor } from "./ContactSensor";
+import { RxMqtt } from "node-homie/mqtt";
 
 export declare type FactoryDeviceClass = {
-    new(id: HomieID, attrs: DeviceAttributes, mqttOptions: MQTTConnectOpts, api: DeconzAPI, events$: Observable<DeconzMessage>, sensor: Resource | Sensor | Group, deviceId?: string): FactoryDevice;
+    new(attrs: Partial<DeviceAttributes> & IDAttributeImpl, mqttOptions: RxMqtt, api: DeconzAPI, events$: Observable<DeconzMessage>, sensor: Resource | Sensor | Group, deviceId?: string): FactoryDevice;
 };
 
 export interface DeviceTypeClasses {
@@ -56,7 +56,7 @@ export class DeviceFactory {
     }
 
 
-    constructor(private core: Core, private events$: Observable<DeconzMessage>, protected parentId?: string) {
+    constructor(private core: Core, private events$: Observable<DeconzMessage>, protected sharedMqtt: RxMqtt, protected parentId?: string) {
         this.log = winston.child({
             type: this.constructor.name
         });
@@ -82,18 +82,21 @@ export class DeviceFactory {
         this.log.info(`Create light device: ${ressource.name} `);
         const typeClass = this.deviceTypes['light'];
         // ressource.uniqueid
-        const dev = new typeClass(`light-${deviceId}`,
+        const dev = new typeClass(
             {
+                id: `light-${deviceId}`,
                 name: ressource.name,
                 parent: this.parentId,
                 root: this.parentId
             },
-            {
-                url: this.core.settings.mqtt_url,
-                username: this.core.settings.mqtt_user,
-                password: this.core.settings.mqtt_password,
-                topicRoot: this.core.settings.mqtt_topic_root
-            }, api, this.events$, ressource, deviceId);
+            // {
+            //     url: this.core.settings.mqtt_url,
+            //     username: this.core.settings.mqtt_user,
+            //     password: this.core.settings.mqtt_password,
+            //     topicRoot: this.core.settings.mqtt_topic_root
+            // }, 
+            this.sharedMqtt,
+            api, this.events$, ressource, deviceId);
 
         await dev.create()
         return dev;
@@ -104,18 +107,21 @@ export class DeviceFactory {
         this.log.info(`Create group device: ${ressource.resource.name} `);
         const typeClass = this.deviceTypes['group'];
         // ressource.uniqueid
-        const dev = new typeClass(`group-${deviceId}`,
+        const dev = new typeClass(
             {
+                id: `group-${deviceId}`,
                 name: ressource.resource.name,
                 parent: this.parentId,
                 root: this.parentId
             },
-            {
-                url: this.core.settings.mqtt_url,
-                username: this.core.settings.mqtt_user,
-                password: this.core.settings.mqtt_password,
-                topicRoot: this.core.settings.mqtt_topic_root
-            }, api, this.events$, ressource, deviceId);
+            // {
+            //     url: this.core.settings.mqtt_url,
+            //     username: this.core.settings.mqtt_user,
+            //     password: this.core.settings.mqtt_password,
+            //     topicRoot: this.core.settings.mqtt_topic_root
+            // }, 
+            this.sharedMqtt,
+            api, this.events$, ressource, deviceId);
 
         await dev.create()
         return dev;
@@ -166,23 +172,31 @@ export class DeviceFactory {
     public async createSensorDevice(api: DeconzAPI, sensor: Sensor): Promise<HomieDevice> {
 
 
+
         const deviceInfo = this.determineSensorDeviceInfo(sensor.sensors)
         // const typeClass = 
         if (!deviceInfo) { return undefined; }
+        if (!this.sharedMqtt.connectionInfo.connected){
+            throw new Error(`${deviceInfo.id} -- cannot create sensor - mqtt not connected!`);
+        }
+
         this.log.info(`Create sensor device for ${sensor.mac} - ${deviceInfo.name}`);
 
-        const dev = new deviceInfo.typeClass(deviceInfo.id,
+        const dev = new deviceInfo.typeClass(
             {
+                id: deviceInfo.id,
                 name: deviceInfo.name,
                 parent: this.parentId,
                 root: this.parentId
             },
-            {
-                url: this.core.settings.mqtt_url,
-                username: this.core.settings.mqtt_user,
-                password: this.core.settings.mqtt_password,
-                topicRoot: this.core.settings.mqtt_topic_root
-            }, api, this.events$, sensor);
+            // {
+            //     url: this.core.settings.mqtt_url,
+            //     username: this.core.settings.mqtt_user,
+            //     password: this.core.settings.mqtt_password,
+            //     topicRoot: this.core.settings.mqtt_topic_root
+            // }, 
+            this.sharedMqtt,
+            api, this.events$, sensor);
 
         await dev.create()
         return dev;

@@ -2,7 +2,7 @@ import { Core } from './core/Core';
 import { Controller } from './Controller';
 
 import * as winston from "winston";
-import { OnDestroy, OnInit } from 'node-homie5/misc';
+import { OnDestroy, OnInit } from 'node-homie/misc';
 
 
 export class App implements OnInit, OnDestroy {

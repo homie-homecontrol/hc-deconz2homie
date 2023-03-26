@@ -17,12 +17,12 @@ export class ContactSensor extends SensorDevice {
 
         this.openCloseResource = this.getSensorDefByType('ZHAOpenClose');
 
-        this.maintenanceNode =  this.add(new MaintenanceNode(this, undefined, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
+        this.maintenanceNode =  this.add(new MaintenanceNode(this, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
         this.maintenanceNode.lastUpdate =this.getDateForLastUpdate(this.openCloseResource.definition);
         this.maintenanceNode.reachable = this.openCloseResource.definition.config.reachable;
         this.maintenanceNode.batteryLevel = this.openCloseResource.definition.config.battery;
 
-        this.contactNode =  this.add(new ContactNode(this, undefined, {}, { }));
+        this.contactNode =  this.add(new ContactNode(this, undefined, { }));
 
         this.contactNode.state = this.openCloseResource.definition.state.open;
 

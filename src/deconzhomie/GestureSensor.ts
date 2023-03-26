@@ -22,8 +22,9 @@ export class GestureSensor extends SensorDevice {
                 const sensor = this.sensor.sensors[uniqueid];
 
                 const resource: ZHASwitch = sensor.definition as ZHASwitch;
-                this.gestureNodes[sensor.id] = this.add(new GestureSensorNode(this,`gesture-sensor-${sensor.id}`,
+                this.gestureNodes[sensor.id] = this.add(new GestureSensorNode(this,
                     {
+                        id: `gesture-sensor-${sensor.id}`,
                         name: `Gesture sensor-${sensor.id}`,
                     },
                     {
@@ -35,7 +36,7 @@ export class GestureSensor extends SensorDevice {
         }
 
 
-        this.maintenanceNode = this.add(new MaintenanceNode(this, undefined, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
+        this.maintenanceNode = this.add(new MaintenanceNode(this, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
         this.maintenanceNode.lastUpdate = this.getDateForLastUpdate(this.maintenanceResource);
         this.maintenanceNode.reachable = this.maintenanceResource.config.reachable;
         this.maintenanceNode.batteryLevel = this.maintenanceResource.config.battery;

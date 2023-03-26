@@ -1,4 +1,4 @@
-import { parseRGBColor, rgbColorToString } from "node-homie5/util";
+import { parseRGBColor, rgbColorToString } from "node-homie/util";
 import { ColorLightNode, DimmerNode, MaintenanceNode, SwitchNode } from "hc-node-homie-smarthome";
 import { filter, switchMap, takeUntil } from "rxjs/operators";
 import { adjustRGB, getRGBFromLightState, rgbToXYBri, xyBriToRgb } from "../deconz/colors.func";
@@ -16,7 +16,7 @@ export class GenericLight extends FactoryDevice<LightResource> {
     public async create() {
         if (this.created) { return; }
         if (isLightResource(this.resource)) {
-            this.maintenanceNode = this.add(new MaintenanceNode(this, undefined, {}, { batteryLevel: false, lastUpdate: true, lowBattery: false, reachable: true }));
+            this.maintenanceNode = this.add(new MaintenanceNode(this, {}, { batteryLevel: false, lastUpdate: true, lowBattery: false, reachable: true }));
             this.maintenanceNode.lastUpdate = new Date(this.resource.lastseen);
             this.maintenanceNode.reachable = this.resource.state.reachable;
 
@@ -59,7 +59,7 @@ export class GenericLight extends FactoryDevice<LightResource> {
             if (this.resource.hascolor) {
 
                 const propConfig: ColorLightNodePropertyConfig = this.resource.ctmin > 0 ? { ctmin: this.resource.ctmin, ctmax: this.resource.ctmax } : { ctmin: 153, ctmax: 555 };
-                const colorNode = this.add(new ColorLightNode(this,undefined, {}, propConfig));
+                const colorNode = this.add(new ColorLightNode(this, {}, propConfig));
 
                 colorNode.color = getRGBFromLightState(this.resource.state); // ColorConverter.xyBriToRgb(this.resource.state.xy[0], this.resource.state.xy[1], Math.round((this.resource.state?.bri / 255) * 100));
                 colorNode.colorTemperature = this.resource.state.ct;

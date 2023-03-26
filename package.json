@@ -15,9 +15,9 @@
     "axios": "~0.24.0",
     "cie-rgb-color-converter": "~1.0.6",
     "color-space": "~1.16.0",
-    "node-homie5": "~0.5.14",
-    "hc-node-homie-smarthome": "~5.0.2",
-    "rxjs": "~7.8.0",
+    "node-homie": "~5.0.0-beta5",
+    "hc-node-homie-smarthome": "~5.0.0-beta5",
+    "rxjs": "~7.4.0",
     "winston": "~3.3.3",
     "ws": "~7.4.2"
   },

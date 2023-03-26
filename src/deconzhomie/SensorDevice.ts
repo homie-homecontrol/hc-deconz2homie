@@ -1,5 +1,5 @@
-import { DeviceAttributes, HomieID } from "node-homie5/model";
-import { MQTTConnectOpts } from "node-homie5/model";
+import { DeviceAttributes, HomieID } from "node-homie/model";
+import { MQTTConnectOpts } from "node-homie/model";
 import { MaintenanceNode } from "hc-node-homie-smarthome";
 import { lastValueFrom, Observable } from "rxjs";
 import { takeUntil, filter, switchMap } from "rxjs/operators";
@@ -9,6 +9,7 @@ import { SensorResource, SHASensorType } from "../deconz/deconz.model";
 import { FactoryDevice } from "./FactoryDevice";
 import { Sensor, SensorDefinition } from "./SensorRessourceCollator";
 import { H_SMARTHOME_NS_V1 } from "hc-node-homie-smarthome/model";
+import { RxMqtt } from "node-homie/mqtt";
 
 export abstract class SensorDevice<T extends Sensor = Sensor> extends FactoryDevice<T> {
     // protected mac: string;
@@ -19,8 +20,8 @@ export abstract class SensorDevice<T extends Sensor = Sensor> extends FactoryDev
 
     protected maintenanceNode: MaintenanceNode;
 
-    constructor(id: HomieID, attrs: DeviceAttributes, mqttOptions: MQTTConnectOpts, api: DeconzAPI, events$: Observable<DeconzMessage>, resource: T) {
-        super(id, attrs, mqttOptions, api, events$, resource);
+    constructor(attrs: DeviceAttributes, mqttOptions: RxMqtt, api: DeconzAPI, events$: Observable<DeconzMessage>, resource: T) {
+        super(attrs, mqttOptions, api, events$, resource);
         this.sensor = resource as Sensor;
         // this.mac = mac;
 

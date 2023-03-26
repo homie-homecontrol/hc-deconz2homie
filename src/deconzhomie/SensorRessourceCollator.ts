@@ -1,4 +1,4 @@
-import { DictionaryStore, OnDestroy, OnInit } from "node-homie5/misc";
+import { DictionaryStore, OnDestroy, OnInit } from "node-homie/misc";
 import { Subject } from "rxjs";
 import { bufferTime, mapTo, takeUntil, tap } from "rxjs/operators";
 import { SensorResource } from "../deconz/deconz.model";

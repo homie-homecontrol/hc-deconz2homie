@@ -1,5 +1,5 @@
-import { HomieNode, HomieProperty } from "node-homie5";
-import { HOMIE_TYPE_ENUM, HOMIE_TYPE_FLOAT, HOMIE_TYPE_INT } from "node-homie5/model";
+import { HomieNode, HomieProperty } from "node-homie";
+import { HOMIE_TYPE_ENUM, HOMIE_TYPE_FLOAT, HOMIE_TYPE_INT } from "node-homie/model";
 import { H_SMARTHOME_TYPE_EXTENSTION } from "hc-node-homie-smarthome/model";
 import { MaintenanceNode } from "hc-node-homie-smarthome";
 import { takeUntil, filter, tap } from "rxjs/operators";
@@ -46,36 +46,41 @@ export class XiaomiAqaraCube extends SensorDevice {
             throw new Error(`Cannot find all required resources for device: ${this.id} (${this.attributes.name})`);
         }
 
-        this.maintenanceNode = this.add(new MaintenanceNode(this, undefined, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
+        this.maintenanceNode = this.add(new MaintenanceNode(this, {}, { batteryLevel: true, lastUpdate: true, lowBattery: false, reachable: true }));
         this.maintenanceNode.lastUpdate = this.getDateForLastUpdate(this.rotate.definition);
         this.maintenanceNode.reachable = this.rotate.definition.config.reachable;
         this.maintenanceNode.batteryLevel = this.rotate.definition.config.battery;
 
-        this.cubeNode = this.add(new HomieNode(this, 'cube', {
+        this.cubeNode = this.add(new HomieNode(this,  {
+            id: 'cube',
             name: 'Cube data',
             type: `${H_SMARTHOME_TYPE_EXTENSTION}=aqara-magic-cube`
         }));
 
-        this.propGesture = this.cubeNode.add(new HomieProperty(this.cubeNode, 'gesture', {
+        this.propGesture = this.cubeNode.add(new HomieProperty(this.cubeNode,  {
+            id: 'gesture',
             name: 'Gesture',
             datatype: HOMIE_TYPE_ENUM,
             retained: false,
             settable: false,
             format: Object.values(GestureMap).join(',')
         }));
-        this.propAngle = this.cubeNode.add(new HomieProperty(this.cubeNode, 'angle', {
+        this.propAngle = this.cubeNode.add(new HomieProperty(this.cubeNode,  {
+            id: 'angle',
             name: 'Rotation angle',
             datatype: HOMIE_TYPE_FLOAT,
             retained: false,
             settable: false,
         }));
-        this.propRawGesture = this.cubeNode.add(new HomieProperty(this.cubeNode, 'raw-gesture', {
+        this.propRawGesture = this.cubeNode.add(new HomieProperty(this.cubeNode,  {
+            id: 'raw-gesture',
             name: 'Raw gesture data',
             datatype: HOMIE_TYPE_INT,
             retained: false,
             settable: false,
         }));
-        this.propRawEvent = this.cubeNode.add(new HomieProperty(this.cubeNode, 'raw-event', {
+        this.propRawEvent = this.cubeNode.add(new HomieProperty(this.cubeNode,  {
+            id: 'raw-event',
             name: 'Raw event data',
             datatype: HOMIE_TYPE_INT,
             retained: false,

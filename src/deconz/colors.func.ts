@@ -2,7 +2,7 @@
 import ColorConverter from 'cie-rgb-color-converter';
 import { GroupAction, LightsState } from './deconz.model';
 import colorspace from 'color-space';
-import { HomieRGBColor, HomieXYBriColor } from 'node-homie5/model';
+import { HomieRGBColor, HomieXYBriColor } from 'node-homie/model';
 
 
 export function round2(num: number): number {

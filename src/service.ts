@@ -5,7 +5,8 @@ import * as winston from "winston";
 
 import { Globals } from './globals';
 import { inspect } from 'util';
-import { asyncTimeout, LogLevelName, LogLevels, SimpleLogger } from 'node-homie5/misc';
+import { LogLevelName, LogLevels, SimpleLogger } from 'node-homie/misc';
+import { asyncTimeout } from "node-homie/util";
 
 const DEFAULT_LOGLEVEL = 'info'
 const ENV_DEBUG_LEVEL = `${Globals.SERVICE_NAMESPACE}_LOGLEVEL`;
@@ -19,6 +20,7 @@ SimpleLogger.loglevel = SL_LOGLEVEL;
 SimpleLogger.domain = Globals.LOG_DOMAIN;
 
 import App from './App';
+
 
 const hcLogFormat = winston.format.printf((info) => {
   return `${info['timestamp']} ${info.level} [${info['service']}:${info['type']}${info['name'] ? `:${info['name']}` : ''}]: ${info.message}` + ((Object.keys(info['args']).length > 0) ? inspect(info['args'], { showHidden: false, depth: null }) : '');

@@ -1,5 +1,5 @@
-import { HomieNode, HomieProperty, HomieDevice } from "node-homie5";
-import { NodeAttributes, HOMIE_TYPE_BOOL, HOMIE_TYPE_INT, HomieID } from "node-homie5/model";
+import { HomieProperty, HomieDevice } from "node-homie";
+import { NodeAttributes, HOMIE_TYPE_INT } from "node-homie/model";
 import { BaseNodePropertyConfig, H_SMARTHOME_TYPE_EXTENSTION } from "hc-node-homie-smarthome/model";
 import { BaseSmarthomeNode } from "hc-node-homie-smarthome";
 
@@ -39,9 +39,10 @@ export class GestureSensorNode extends BaseSmarthomeNode<GestureSensorPropertyCo
     }
 
 
-    constructor(device: HomieDevice, id: HomieID = 'gesture-sensor', attrs: Partial<NodeAttributes> = {}, propConfig: GestureSensorPropertyConfig = { gesture: true, buttonEvent: true }) {
-        super(device, id, {
+    constructor(device: HomieDevice, attrs: Partial<NodeAttributes> = {}, propConfig: GestureSensorPropertyConfig = { gesture: true, buttonEvent: true }) {
+        super(device, {
             ...{
+                id: 'gesture-sensor',
                 name: 'Gesture sensor',
                 type: H_SMARTHOME_TYPE_EXT_GUESTURE_SENSOR
             },
@@ -50,7 +51,8 @@ export class GestureSensorNode extends BaseSmarthomeNode<GestureSensorPropertyCo
 
 
         if (this.propConfig.gesture) {
-            this.propGesture = this.makeProperty('gesture', {
+            this.propGesture = this.makeProperty({
+                id: 'gesture',
                 name: 'Gesture event',
                 datatype: HOMIE_TYPE_INT,
                 retained: false,
@@ -59,7 +61,8 @@ export class GestureSensorNode extends BaseSmarthomeNode<GestureSensorPropertyCo
         }
 
         if (this.propConfig.buttonEvent) {
-            this.propButtonEvent = this.makeProperty('button-event', {
+            this.propButtonEvent = this.makeProperty({
+                id: 'button-event',
                 name: 'Button event',
                 datatype: HOMIE_TYPE_INT,
                 retained: false,
